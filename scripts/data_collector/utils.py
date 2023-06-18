@@ -1,6 +1,6 @@
 #  Copyright (c) Microsoft Corporation.
 #  Licensed under the MIT License.
-
+import datetime
 import re
 import importlib
 import time
@@ -49,7 +49,7 @@ _EN_FUND_SYMBOLS = None
 _CALENDAR_MAP = {}
 
 # NOTE: Until 2020-10-20 20:00:00
-MINIMUM_SYMBOLS_NUM = 3900
+MINIMUM_SYMBOLS_NUM = 4614
 
 
 def get_calendar_list(bench_code="CSI300") -> List[pd.Timestamp]:
@@ -95,11 +95,22 @@ def get_calendar_list(bench_code="CSI300") -> List[pd.Timestamp]:
 
                 month_range = pd.date_range(start="2000-01", end=pd.Timestamp.now() + pd.Timedelta(days=31), freq="M")
                 calendar = []
+
+                '''
+                begin = datetime.datetime(2000, 1, 1)
+                end = datetime.datetime.now()
+                for i in range((end - begin).days + 1):
+                    day = begin + datetime.timedelta(days=i)
+                    calendar.append(pd.Timestamp(day.strftime("%Y-%m-%d")))
+                '''
+
+
                 for _m in month_range:
                     cal = _get_calendar(_m.strftime("%Y-%m"))
                     if cal:
                         calendar += cal
                 calendar = list(filter(lambda x: x <= pd.Timestamp.now(), calendar))
+
             else:
                 calendar = _get_calendar(CALENDAR_BENCH_URL_MAP[bench_code])
         _CALENDAR_MAP[bench_code] = calendar
@@ -476,11 +487,13 @@ def symbol_prefix_to_sufix(symbol: str, capital: bool = True) -> str:
     return res.upper() if capital else res.lower()
 
 
-def deco_retry(retry: int = 5, retry_sleep: int = 3):
+def deco_retry(retry: int = 0, retry_sleep: int = 3):
     def deco_func(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             _retry = 5 if callable(retry) else retry
+            #_retry=1
+
             _result = None
             for _i in range(1, _retry + 1):
                 try:

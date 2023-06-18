@@ -132,7 +132,9 @@ class YahooCollector(BaseCollector):
         try:
             _resp = Ticker(symbol, asynchronous=False).history(interval=interval, start=start, end=end)
             if isinstance(_resp, pd.DataFrame):
-                return _resp.reset_index()
+                newData=_resp.reset_index()
+                newData['date']=pd.to_datetime(newData['date']).dt.strftime('%Y-%m-%d')
+                return newData
             elif isinstance(_resp, dict):
                 _temp_data = _resp.get(symbol, {})
                 if isinstance(_temp_data, str) or (
@@ -143,7 +145,7 @@ class YahooCollector(BaseCollector):
                 _show_logging_func()
         except Exception as e:
             logger.warning(
-                f"get data error: {symbol}--{start}--{end}"
+                f"get data error: {symbol}--{start}--{end} {e}"
                 + "Your data request fails. This may be caused by your firewall (e.g. GFW). Please switch your network if you want to access Yahoo! data"
             )
 
@@ -204,6 +206,7 @@ class YahooCollectorCN(YahooCollector, ABC):
     def get_instrument_list(self):
         logger.info("get HS stock symbols......")
         symbols = get_hs_stock_symbols()
+        #symbols = symbols.drop(symbols[(symbols.str.startswith("30"))].index)
         logger.info(f"get {len(symbols)} symbols.")
         return symbols
 
@@ -574,7 +577,11 @@ class YahooNormalize1dExtend(YahooNormalize1d):
             df.index = pd.to_datetime(df.index)
             df = df[~df.index.duplicated(keep="first")]
             _max_date = df.index.max()
-            df = df.reindex(self._calendar_list).loc[:_max_date].reset_index()
+
+            df = df.reindex(self._calendar_list)
+            df =df.loc[:_max_date]
+            df = df.reset_index()
+
             df = df[df[self._date_field_name] > _last_date]
             if df.empty:
                 return pd.DataFrame()
@@ -1164,10 +1171,11 @@ class Run(BaseRun):
         if end_date is None:
             end_date = (pd.Timestamp(trading_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
 
+        #'''
         # download qlib 1d data
-        qlib_data_1d_dir = str(Path(qlib_data_1d_dir).expanduser().resolve())
-        if not exists_qlib_data(qlib_data_1d_dir):
-            GetData().qlib_data(target_dir=qlib_data_1d_dir, interval=self.interval, region=self.region)
+        #qlib_data_1d_dir = str(Path(qlib_data_1d_dir).expanduser().resolve())
+        #if not exists_qlib_data(qlib_data_1d_dir):
+        #    GetData().qlib_data(target_dir=qlib_data_1d_dir, interval=self.interval, region=self.region)
 
         # download data from yahoo
         # NOTE: when downloading data from YahooFinance, max_workers is recommended to be 1
@@ -1178,8 +1186,11 @@ class Run(BaseRun):
             if self.max_workers is None or self.max_workers <= 1
             else self.max_workers
         )
+        #self.max_workers =1
+        #'''
         # normalize data
         self.normalize_data_1d_extend(qlib_data_1d_dir)
+        #'''
 
         # dump bin
         _dump = DumpDataUpdate(
@@ -1189,6 +1200,7 @@ class Run(BaseRun):
             max_workers=self.max_workers,
         )
         _dump.dump()
+        #'''
 
         # parse index
         _region = self.region.lower()
@@ -1201,6 +1213,8 @@ class Run(BaseRun):
         )
         for _index in index_list:
             get_instruments(str(qlib_data_1d_dir), _index, market_index=f"{_region}_index")
+
+        logger.info(f"update_data_to_bin finished !")
 
 
 if __name__ == "__main__":
