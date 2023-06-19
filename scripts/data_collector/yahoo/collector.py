@@ -1171,7 +1171,7 @@ class Run(BaseRun):
         if end_date is None:
             end_date = (pd.Timestamp(trading_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
 
-        #'''
+        '''
         # download qlib 1d data
         #qlib_data_1d_dir = str(Path(qlib_data_1d_dir).expanduser().resolve())
         #if not exists_qlib_data(qlib_data_1d_dir):
@@ -1187,10 +1187,8 @@ class Run(BaseRun):
             else self.max_workers
         )
         #self.max_workers =1
-        #'''
         # normalize data
         self.normalize_data_1d_extend(qlib_data_1d_dir)
-        #'''
 
         # dump bin
         _dump = DumpDataUpdate(
@@ -1200,7 +1198,7 @@ class Run(BaseRun):
             max_workers=self.max_workers,
         )
         _dump.dump()
-        #'''
+        '''
 
         # parse index
         _region = self.region.lower()

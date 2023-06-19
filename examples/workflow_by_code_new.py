@@ -15,11 +15,17 @@ from qlib.workflow.record_temp import SignalRecord, PortAnaRecord, SigAnaRecord
 from qlib.tests.data import GetData
 from qlib.tests.config import CSI300_BENCH, CSI300_GBDT_TASK
 
+from cfquant.instock.lib import utilsHelper
 
 if __name__ == "__main__":
 
+    provider_uri = "F:\Project\Gits\ProjectData\qlibdata\dump"
+
+    if utilsHelper.CheckIsHouse() == True:
+        provider_uri = "H:\Stock\ProjectData\qlibdata\dump"
+
     # use default data
-    provider_uri = "H:\Stock\ProjectData\qlibdata\dump"  # target_dir
+      # target_dir
     GetData().qlib_data(target_dir=provider_uri, region=REG_CN, exists_skip=True)
     qlib.init(provider_uri=provider_uri, region=REG_CN)
 
@@ -31,7 +37,7 @@ if __name__ == "__main__":
     ###################################
     data_handler_config = {
         "start_time": "2008-01-01",
-        "end_time": "2022-06-15",
+        "end_time": "2023-06-15",
         "fit_start_time": "2008-01-01",
         "fit_end_time": "2021-12-31",
         "instruments": market,
