@@ -25,6 +25,8 @@ from qlib.tests.data import GetData
 from qlib.utils import code_to_fname, fname_to_code, exists_qlib_data
 from qlib.constant import REG_CN as REGION_CN
 
+import instock.core.crawling.stock_hist_em as she
+
 CUR_DIR = Path(__file__).resolve().parent
 sys.path.append(str(CUR_DIR.parent.parent))
 
@@ -206,7 +208,15 @@ class YahooCollectorCN(YahooCollector, ABC):
     def get_instrument_list(self):
         logger.info("get HS stock symbols......")
         symbols = get_hs_stock_symbols()
-        #symbols = symbols.drop(symbols[(symbols.str.startswith("30"))].index)
+        data = she.stock_zh_a_spot_em()
+        chinaCode=data["代码"]
+
+        for item in symbols.copy():
+            codeItem=item.split('.')[0]
+            if codeItem not in chinaCode.values:
+                symbols.remove(item)
+
+        symbols = [item for item in symbols if item.startswith("30")==False]
         logger.info(f"get {len(symbols)} symbols.")
         return symbols
 

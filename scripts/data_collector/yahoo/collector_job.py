@@ -39,9 +39,17 @@ def normalize_data():
                   normalize_dir=f'{dataFolder}normalize',
                   max_workers=60).normalize_data()
 
+def download_data():
+        collector.Run(source_dir=f"{dataFolder}csv",
+                      normalize_dir=f'{dataFolder}normalize',
+                      max_workers=60).download_data(max_collector_count=60,
+                                                    delay=0.1, start="2000-01-01",end=datetime.datetime.now().strftime("%Y-%m-%d"))
+
 if __name__ == '__main__':
     #update_data_to_bin()
-    #normalize_data()
+    #download_data()
+    normalize_data()
     dumpAll()
+
 
 
