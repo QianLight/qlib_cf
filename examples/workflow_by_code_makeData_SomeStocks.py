@@ -19,17 +19,19 @@ from cfquant.instock.lib import utilsHelper
 
 if __name__ == "__main__":
 
-    provider_uri = "F:\Project\Gits\ProjectData\qlibdata\dump"
+    root_uri = "F:/Project/Gits/ProjectData/qlibdata/"
 
     if utilsHelper.CheckIsHouse() == True:
-        provider_uri = "H:\Stock\ProjectData\qlibdata\dump"
+        root_uri = "H:/Stock/ProjectData/qlibdata/"
+
+    provider_uri = root_uri+"dump"
 
     # use default data
       # target_dir
     GetData().qlib_data(target_dir=provider_uri, region=REG_CN, exists_skip=True)
     qlib.init(provider_uri=provider_uri, region=REG_CN)
 
-    market = "all"
+    market = "stocks"
     benchmark = "SH000300"
 
     ###################################
@@ -37,9 +39,9 @@ if __name__ == "__main__":
     ###################################
     data_handler_config = {
         "start_time": "2008-01-01",
-        "end_time": "2023-06-15",
+        "end_time": "2023-06-21",
         "fit_start_time": "2008-01-01",
-        "fit_end_time": "2021-12-31",
+        "fit_end_time": "2023-06-21",
         "instruments": market,
     }
 
@@ -72,9 +74,9 @@ if __name__ == "__main__":
                     "kwargs": data_handler_config,
                 },
                 "segments": {
-                    "train": ("2008-01-01", "2021-12-31"),
-                    "valid": ("2022-01-01", "2022-12-31"),
-                    "test": ("2023-01-01", "2023-06-15"),
+                    "train": ("2008-01-01", "2023-06-21"),
+                    "valid": ("2022-01-01", "2023-06-21"),
+                    "test": ("2023-01-01", "2023-06-21"),
                 },
             },
         },
@@ -107,7 +109,7 @@ if __name__ == "__main__":
         },
         "backtest": {
             "start_time": "2023-01-01",
-            "end_time": "2023-06-15",
+            "end_time": "2023-06-21",
             "account": 100000000,
             "benchmark": CSI300_BENCH,
             "exchange_kwargs": {
@@ -123,29 +125,9 @@ if __name__ == "__main__":
 
     # NOTE: This line is optional
     # It demonstrates that the dataset can be used standalone.
-    example_df = dataset.prepare("train")
-    print(example_df.head())
-    example_df.to_csv(f"H:/Stock/ProjectData/qlibdata/qlib.csv", index=False)
-    valid_df = dataset.prepare("valid")
-    example_df = dataset.prepare("test")
-    #return
+    train = dataset.prepare("train")
+    print(f"train:{len(train)}")
+    train.to_csv(root_uri+f"h2o/stocks.csv", index=False)
 
-    # start exp
-    with R.start(experiment_name="workflow"):
-        R.log_params(**flatten_dict(CSI300_GBDT_TASK))
-        model.fit(dataset)
-        R.save_objects(**{"params.pkl": model})
 
-        # prediction
-        recorder = R.get_recorder()
-        sr = SignalRecord(model, dataset, recorder)
-        sr.generate()
 
-        # Signal Analysis
-        sar = SigAnaRecord(recorder)
-        sar.generate()
-
-        # backtest. If users want to use backtest based on their own prediction,
-        # please refer to https://qlib.readthedocs.io/en/latest/component/recorder.html#record-template.
-        par = PortAnaRecord(recorder, port_analysis_config, "day")
-        par.generate()
